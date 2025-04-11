@@ -166,12 +166,20 @@
     function handleKeyClick(button, letter) {
       if (selectedTile) {
         const pos = selectedTile.dataset.pos;
+        const lowercase = letter.toLowerCase();
+
+        // If letter was previously yellow, remove it from yellow
+        if (yellowLetters.has(lowercase)) {
+          yellowLetters.delete(lowercase);
+          moveHistory.push({ type: 'promoted-yellow-to-green', letter: lowercase });
+        }
+
         moveHistory.push({ type: 'green', pos, prev: greenLetters[pos], letter });
         selectedTile.textContent = letter;
         selectedTile.classList.remove('selected');
         selectedTile = null;
-        greenLetters[pos] = letter.toLowerCase();
-        button.className = 'key green';
+        greenLetters[pos] = lowercase;
+        keyButtons[letter].className = 'key green';
       } else {
         const upper = letter.toUpperCase();
         if (button.classList.contains('green')) return;
@@ -248,7 +256,7 @@
 
       if (last.type === 'toggle') {
         const btn = keyButtons[last.letter];
-        btn.classList.remove('green', 'yellow', 'red');
+        btn.className = "key";
 
         if (last.from === 'yellow') {
           redLetters.delete(last.letter.toLowerCase());
@@ -257,7 +265,13 @@
         } else if (last.from === 'red') {
           redLetters.add(last.letter.toLowerCase());
           btn.classList.add('red');
+        } else if (last.from === 'default') {
+          yellowLetters.delete(last.letter.toLowerCase());
         }
+      }
+
+      if (last.type === 'promoted-yellow-to-green') {
+        yellowLetters.add(last.letter);
       }
 
       fetchMatches();
