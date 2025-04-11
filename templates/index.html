@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Wordle Assistant (Web)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
   <style>
     body {
       background-color: black;
@@ -17,10 +16,18 @@
       align-items: center;
     }
 
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 480px;
+      margin-bottom: 10px;
+    }
+
     .tiles {
       display: flex;
       justify-content: center;
-      margin-bottom: 10px;
       flex-wrap: wrap;
     }
 
@@ -52,13 +59,13 @@
       margin-bottom: 6px;
       display: flex;
       justify-content: center;
-      flex-wrap: nowrap; /* ✅ Prevent wrapping to next line */
+      flex-wrap: nowrap;
     }
 
     .key {
-      width: 34px;         /* ✅ Slightly narrower keys */
+      width: 34px;
       height: 36px;
-      margin: 1.5px;        /* ✅ Tighter spacing */
+      margin: 1.5px;
       font-size: 13px;
       font-weight: bold;
       background-color: #C0C0C0;
@@ -86,15 +93,33 @@
       overflow-y: auto;
       margin-top: 8px;
     }
+
+    .btn {
+      background-color: white;
+      color: black;
+      border: none;
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <div class="tiles" id="tiles">
-    <div class="tile" data-pos="0">_</div>
-    <div class="tile" data-pos="1">_</div>
-    <div class="tile" data-pos="2">_</div>
-    <div class="tile" data-pos="3">_</div>
-    <div class="tile" data-pos="4">_</div>
+
+  <div class="controls">
+    <button class="btn" onclick="resetAll()">Reset</button>
+
+    <div class="tiles" id="tiles">
+      <div class="tile" data-pos="0">_</div>
+      <div class="tile" data-pos="1">_</div>
+      <div class="tile" data-pos="2">_</div>
+      <div class="tile" data-pos="3">_</div>
+      <div class="tile" data-pos="4">_</div>
+    </div>
+
+    <button class="btn" onclick="undoLast()">Undo</button>
   </div>
 
   <div class="keyboard" id="keyboard"></div>
@@ -113,6 +138,8 @@
     let greenLetters = {};
     let yellowLetters = new Set();
     let redLetters = new Set();
+    let keyButtons = {};
+    let moveHistory = [];
 
     keyboardLayout.forEach(row => {
       const rowDiv = document.createElement('div');
@@ -123,6 +150,7 @@
         btn.textContent = letter;
         btn.onclick = () => handleKeyClick(btn, letter);
         rowDiv.appendChild(btn);
+        keyButtons[letter] = btn;
       });
       keyboard.appendChild(rowDiv);
     });
@@ -138,23 +166,28 @@
     function handleKeyClick(button, letter) {
       if (selectedTile) {
         const pos = selectedTile.dataset.pos;
+        moveHistory.push({ type: 'green', pos, prev: greenLetters[pos], letter });
         selectedTile.textContent = letter;
         selectedTile.classList.remove('selected');
         selectedTile = null;
         greenLetters[pos] = letter.toLowerCase();
         button.className = 'key green';
       } else {
+        const upper = letter.toUpperCase();
         if (button.classList.contains('green')) return;
+
         if (button.classList.contains('yellow')) {
+          moveHistory.push({ type: 'toggle', letter: upper, from: 'yellow', to: 'red' });
           button.classList.remove('yellow');
           button.classList.add('red');
           yellowLetters.delete(letter.toLowerCase());
           redLetters.add(letter.toLowerCase());
         } else if (button.classList.contains('red')) {
+          moveHistory.push({ type: 'toggle', letter: upper, from: 'red', to: 'default' });
           button.classList.remove('red');
-          yellowLetters.delete(letter.toLowerCase());
           redLetters.delete(letter.toLowerCase());
         } else {
+          moveHistory.push({ type: 'toggle', letter: upper, from: 'default', to: 'yellow' });
           button.classList.add('yellow');
           yellowLetters.add(letter.toLowerCase());
         }
@@ -184,6 +217,50 @@
           list.appendChild(div);
         });
       });
+    }
+
+    function resetAll() {
+      greenLetters = {};
+      yellowLetters.clear();
+      redLetters.clear();
+      moveHistory = [];
+
+      tiles.forEach(tile => {
+        tile.textContent = "_";
+        tile.classList.remove("selected");
+      });
+
+      Object.values(keyButtons).forEach(btn => {
+        btn.className = "key";
+      });
+
+      fetchMatches();
+    }
+
+    function undoLast() {
+      const last = moveHistory.pop();
+      if (!last) return;
+
+      if (last.type === 'green') {
+        delete greenLetters[last.pos];
+        tiles[last.pos].textContent = "_";
+      }
+
+      if (last.type === 'toggle') {
+        const btn = keyButtons[last.letter];
+        btn.classList.remove('green', 'yellow', 'red');
+
+        if (last.from === 'yellow') {
+          redLetters.delete(last.letter.toLowerCase());
+          yellowLetters.add(last.letter.toLowerCase());
+          btn.classList.add('yellow');
+        } else if (last.from === 'red') {
+          redLetters.add(last.letter.toLowerCase());
+          btn.classList.add('red');
+        }
+      }
+
+      fetchMatches();
     }
   </script>
 </body>
