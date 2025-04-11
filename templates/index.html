@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Wordle Assistant (Web)</title>
-
-  <!-- ✅ Viewport meta tag for mobile scaling -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -90,3 +88,103 @@
     }
   </style>
 </head>
+<body>
+  <div class="tiles" id="tiles">
+    <div class="tile" data-pos="0">_</div>
+    <div class="tile" data-pos="1">_</div>
+    <div class="tile" data-pos="2">_</div>
+    <div class="tile" data-pos="3">_</div>
+    <div class="tile" data-pos="4">_</div>
+  </div>
+
+  <div class="keyboard" id="keyboard"></div>
+
+  <div class="matches">
+    <h3>Matches: <span id="match-count">0</span></h3>
+    <div class="word-list" id="word-list"></div>
+  </div>
+
+  <script>
+    const keyboardLayout = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+    const keyboard = document.getElementById('keyboard');
+    const tiles = document.querySelectorAll('.tile');
+    let selectedTile = null;
+
+    let greenLetters = {};
+    let yellowLetters = new Set();
+    let redLetters = new Set();
+
+    keyboardLayout.forEach(row => {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'keyboard-row';
+      row.split('').forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = 'key';
+        btn.textContent = letter;
+        btn.onclick = () => handleKeyClick(btn, letter);
+        rowDiv.appendChild(btn);
+      });
+      keyboard.appendChild(rowDiv);
+    });
+
+    tiles.forEach(tile => {
+      tile.addEventListener('click', () => {
+        tiles.forEach(t => t.classList.remove('selected'));
+        tile.classList.add('selected');
+        selectedTile = tile;
+      });
+    });
+
+    function handleKeyClick(button, letter) {
+      if (selectedTile) {
+        const pos = selectedTile.dataset.pos;
+        selectedTile.textContent = letter;
+        selectedTile.classList.remove('selected');
+        selectedTile = null;
+        greenLetters[pos] = letter.toLowerCase();
+        button.className = 'key green';
+      } else {
+        if (button.classList.contains('green')) return;
+        if (button.classList.contains('yellow')) {
+          button.classList.remove('yellow');
+          button.classList.add('red');
+          yellowLetters.delete(letter.toLowerCase());
+          redLetters.add(letter.toLowerCase());
+        } else if (button.classList.contains('red')) {
+          button.classList.remove('red');
+          yellowLetters.delete(letter.toLowerCase());
+          redLetters.delete(letter.toLowerCase());
+        } else {
+          button.classList.add('yellow');
+          yellowLetters.add(letter.toLowerCase());
+        }
+      }
+      fetchMatches();
+    }
+
+    function fetchMatches() {
+      fetch('/filter', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          greens: greenLetters,
+          yellows: Array.from(yellowLetters),
+          reds: Array.from(redLetters)
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const list = document.getElementById('word-list');
+        const count = document.getElementById('match-count');
+        list.innerHTML = '';
+        count.textContent = data.matches.length;
+        data.matches.forEach(word => {
+          const div = document.createElement('div');
+          div.textContent = word;
+          list.appendChild(div);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
