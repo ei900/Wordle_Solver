@@ -13,8 +13,19 @@
       flex-direction: column;
       align-items: center;
       color: white;
+      background: none;
+      position: relative;
+      z-index: 0;
+    }
 
-      /* 🎨 Updated background pattern */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: -1;
+      opacity: 0.2; /* 👈 Adjust opacity here (0.1 to 1) */
+      pointer-events: none;
+
       --s: 73px;
       --c1: #5e5978;
       --c2: #b8b8b8;
