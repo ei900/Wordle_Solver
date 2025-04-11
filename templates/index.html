@@ -52,13 +52,13 @@
       margin-bottom: 6px;
       display: flex;
       justify-content: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap; /* ✅ Prevent wrapping to next line */
     }
 
     .key {
-      width: 36px;
-      height: 38px;
-      margin: 2px;
+      width: 34px;         /* ✅ Slightly narrower keys */
+      height: 36px;
+      margin: 1.5px;        /* ✅ Tighter spacing */
       font-size: 13px;
       font-weight: bold;
       background-color: #C0C0C0;
