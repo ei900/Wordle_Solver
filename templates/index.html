@@ -1,193 +1,181 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Wordle Assistant (Web)</title>
-    <style>
-        body {
-            background-color: black;
-            color: white;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: row;
-            margin: 0;
-            padding: 20px;
-        }
+  <meta charset="UTF-8">
+  <title>Wordle Assistant (Web)</title>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-        .main {
-            flex: 2;
-            padding-right: 20px;
-        }
+    .tiles {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
 
-        .tiles {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
+    .tile {
+      width: 50px;
+      height: 50px;
+      margin: 5px;
+      font-size: 24px;
+      text-align: center;
+      line-height: 50px;
+      background-color: #aaaaaa;
+      color: black;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-        .tile {
-            width: 50px;
-            height: 50px;
-            margin: 5px;
-            font-size: 24px;
-            text-align: center;
-            line-height: 50px;
-            background-color: #aaaaaa;
-            color: black;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+    .tile.selected {
+      background-color: #cccccc;
+    }
 
-        .tile.selected {
-            background-color: #cccccc;
-        }
+    .keyboard {
+      text-align: center;
+      margin-bottom: 20px;
+    }
 
-        .keyboard {
-            text-align: center;
-        }
+    .keyboard-row {
+      margin-bottom: 10px;
+    }
 
-        .keyboard-row {
-            margin-bottom: 10px;
-        }
+    .key {
+      width: 40px;
+      height: 40px;
+      margin: 3px;
+      font-weight: bold;
+      background-color: #C0C0C0;
+      color: black;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-        .key {
-            width: 40px;
-            height: 40px;
-            margin: 3px;
-            font-weight: bold;
-            background-color: #C0C0C0;
-            color: black;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+    .key.green { background-color: green; color: white; }
+    .key.yellow { background-color: yellow; color: black; }
+    .key.red { background-color: red; color: white; }
 
-        .key.green { background-color: green; color: white; }
-        .key.yellow { background-color: yellow; color: black; }
-        .key.red { background-color: red; color: white; }
+    .matches {
+      width: 100%;
+      max-width: 400px;
+      background-color: #111;
+      padding: 10px;
+      border-radius: 10px;
+      text-align: left;
+    }
 
-        .sidebar {
-            flex: 1;
-            background-color: #111;
-            padding: 10px;
-            border-radius: 10px;
-        }
-
-        .sidebar h3 {
-            margin-top: 0;
-        }
-
-        .word-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-    </style>
+    .word-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-    <div class="main">
-        <div class="tiles" id="tiles">
-            <div class="tile" data-pos="0">_</div>
-            <div class="tile" data-pos="1">_</div>
-            <div class="tile" data-pos="2">_</div>
-            <div class="tile" data-pos="3">_</div>
-            <div class="tile" data-pos="4">_</div>
-        </div>
+  <div class="tiles" id="tiles">
+    <div class="tile" data-pos="0">_</div>
+    <div class="tile" data-pos="1">_</div>
+    <div class="tile" data-pos="2">_</div>
+    <div class="tile" data-pos="3">_</div>
+    <div class="tile" data-pos="4">_</div>
+  </div>
 
-        <div class="keyboard" id="keyboard"></div>
-    </div>
+  <div class="keyboard" id="keyboard"></div>
 
-    <div class="sidebar">
-        <h3>Matches: <span id="match-count">0</span></h3>
-        <div class="word-list" id="word-list"></div>
-    </div>
+  <div class="matches">
+    <h3>Matches: <span id="match-count">0</span></h3>
+    <div class="word-list" id="word-list"></div>
+  </div>
 
-    <script>
-        const keyboardLayout = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
-        const keyboard = document.getElementById('keyboard');
-        const tiles = document.querySelectorAll('.tile');
-        let selectedTile = null;
+  <script>
+    const keyboardLayout = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+    const keyboard = document.getElementById('keyboard');
+    const tiles = document.querySelectorAll('.tile');
+    let selectedTile = null;
 
-        let greenLetters = {};    // e.g., {0: 'a', 2: 'r'}
-        let yellowLetters = new Set();
-        let redLetters = new Set();
+    let greenLetters = {};
+    let yellowLetters = new Set();
+    let redLetters = new Set();
 
-        // Build the on-screen keyboard
-        keyboardLayout.forEach(row => {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'keyboard-row';
-            row.split('').forEach(letter => {
-                const btn = document.createElement('button');
-                btn.className = 'key';
-                btn.textContent = letter;
-                btn.onclick = () => handleKeyClick(btn, letter);
-                rowDiv.appendChild(btn);
-            });
-            keyboard.appendChild(rowDiv);
-        });
+    keyboardLayout.forEach(row => {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'keyboard-row';
+      row.split('').forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = 'key';
+        btn.textContent = letter;
+        btn.onclick = () => handleKeyClick(btn, letter);
+        rowDiv.appendChild(btn);
+      });
+      keyboard.appendChild(rowDiv);
+    });
 
-        // Tile selection
-        tiles.forEach(tile => {
-            tile.addEventListener('click', () => {
-                tiles.forEach(t => t.classList.remove('selected'));
-                tile.classList.add('selected');
-                selectedTile = tile;
-            });
-        });
+    tiles.forEach(tile => {
+      tile.addEventListener('click', () => {
+        tiles.forEach(t => t.classList.remove('selected'));
+        tile.classList.add('selected');
+        selectedTile = tile;
+      });
+    });
 
-        // Handle keyboard letter clicks
-        function handleKeyClick(button, letter) {
-            if (selectedTile) {
-                const pos = selectedTile.dataset.pos;
-                selectedTile.textContent = letter;
-                selectedTile.classList.remove('selected');
-                selectedTile = null;
-                greenLetters[pos] = letter.toLowerCase();
-                button.className = 'key green';
-            } else {
-                // Cycle gray -> yellow -> red -> gray
-                if (button.classList.contains('green')) return;
-                if (button.classList.contains('yellow')) {
-                    button.classList.remove('yellow');
-                    button.classList.add('red');
-                    yellowLetters.delete(letter.toLowerCase());
-                    redLetters.add(letter.toLowerCase());
-                } else if (button.classList.contains('red')) {
-                    button.classList.remove('red');
-                    yellowLetters.delete(letter.toLowerCase());
-                    redLetters.delete(letter.toLowerCase());
-                } else {
-                    button.classList.add('yellow');
-                    yellowLetters.add(letter.toLowerCase());
-                }
-            }
-            fetchMatches();
+    function handleKeyClick(button, letter) {
+      if (selectedTile) {
+        const pos = selectedTile.dataset.pos;
+        selectedTile.textContent = letter;
+        selectedTile.classList.remove('selected');
+        selectedTile = null;
+        greenLetters[pos] = letter.toLowerCase();
+        button.className = 'key green';
+      } else {
+        if (button.classList.contains('green')) return;
+        if (button.classList.contains('yellow')) {
+          button.classList.remove('yellow');
+          button.classList.add('red');
+          yellowLetters.delete(letter.toLowerCase());
+          redLetters.add(letter.toLowerCase());
+        } else if (button.classList.contains('red')) {
+          button.classList.remove('red');
+          yellowLetters.delete(letter.toLowerCase());
+          redLetters.delete(letter.toLowerCase());
+        } else {
+          button.classList.add('yellow');
+          yellowLetters.add(letter.toLowerCase());
         }
+      }
+      fetchMatches();
+    }
 
-        // Send data to server and fetch filtered words
-        function fetchMatches() {
-            fetch('/filter', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    greens: greenLetters,
-                    yellows: Array.from(yellowLetters),
-                    reds: Array.from(redLetters)
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                const list = document.getElementById('word-list');
-                const count = document.getElementById('match-count');
-                list.innerHTML = '';
-                count.textContent = data.matches.length;
-                data.matches.forEach(word => {
-                    const div = document.createElement('div');
-                    div.textContent = word;
-                    list.appendChild(div);
-                });
-            });
-        }
-    </script>
+    function fetchMatches() {
+      fetch('/filter', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          greens: greenLetters,
+          yellows: Array.from(yellowLetters),
+          reds: Array.from(redLetters)
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const list = document.getElementById('word-list');
+        const count = document.getElementById('match-count');
+        list.innerHTML = '';
+        count.textContent = data.matches.length;
+        data.matches.forEach(word => {
+          const div = document.createElement('div');
+          div.textContent = word;
+          list.appendChild(div);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
