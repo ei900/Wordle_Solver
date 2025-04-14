@@ -13,33 +13,12 @@
       flex-direction: column;
       align-items: center;
       color: white;
-      background: none;
-      position: relative;
-      z-index: 0;
-    }
 
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      z-index: -1;
-      opacity: 0.5; /* 👈 Adjust opacity here (0.1 to 1) */
-      pointer-events: none;
-
-      --s: 73px;
-      --c1: #5e5978;
-      --c2: #b8b8b8;
-      --c3: #888ddd;
-
-      --_g: var(--c3) 0 120deg,#0000 0;
-      background:
-        conic-gradient(from -60deg at 50% calc(100%/3),var(--_g)),
-        conic-gradient(from 120deg at 50% calc(200%/3),var(--_g)),
-        conic-gradient(from  60deg at calc(200%/3),var(--c3) 60deg,var(--c2) 0 120deg,#0000 0),
-        conic-gradient(from 180deg at calc(100%/3),var(--c1) 60deg,var(--_g)),
-        linear-gradient(90deg,var(--c1)   calc(100%/6),var(--c2) 0 50%,
-                              var(--c1) 0 calc(500%/6),var(--c2) 0);
-      background-size: calc(1.732*var(--s)) var(--s);
+      background-color: #FFCC99;
+      background-image: url('background.png'); /* 🔁 Replace with correct path if needed */
+      background-size: cover;
+      background-repeat: repeat;
+      background-attachment: fixed;
     }
 
     .controls {
