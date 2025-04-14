@@ -15,10 +15,16 @@
       color: white;
 
       background-color: #FFCC99;
-      background-image: url('/static/background.png'); /* 🔁 Replace with correct path if needed */
-      background-size: cover;
+      background-image: url('/static/background.png');
+      background-size: contain;
       background-repeat: repeat;
       background-attachment: fixed;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        background-size: 60%;
+      }
     }
 
     .controls {
