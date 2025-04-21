@@ -294,11 +294,12 @@
         }
 
         moveHistory.push({ type: 'green', pos, prev: greenLetters[pos], letter });
-        selectedTile.textContent = letter;
+        selectedTile.textContent = letter.toUpperCase();
         selectedTile.classList.remove('selected');
         selectedTile = null;
         greenLetters[pos] = lowercase;
-        keyButtons[letter].className = 'key green';
+        keyButtons[letter.toUpperCase()].className = 'key green';
+        fetchMatches();
       } else {
         const upper = letter.toUpperCase();
         if (button.classList.contains('green')) return;
@@ -318,8 +319,8 @@
           button.classList.add('yellow');
           yellowLetters.add(letter.toLowerCase());
         }
+        fetchMatches();
       }
-      fetchMatches();
     }
 
     function fetchMatches() {
