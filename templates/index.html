@@ -99,11 +99,15 @@
       display: none;
     }
 
-    .tiles-row {
+    .tiles-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 10px 0;
+      margin: 12px 0;
+    }
+
+    .tiles {
+      display: flex;
     }
 
     .tile {
@@ -184,9 +188,6 @@
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
-    }
-
-    .side-btn {
       margin: 0 10px;
     }
   </style>
@@ -211,10 +212,10 @@
     </div>
   </div>
 
-  <div class="tiles-row">
-    <button class="btn side-btn" onclick="resetAll()">Reset</button>
+  <div class="tiles-wrapper">
+    <button class="btn" onclick="resetAll()">Reset</button>
     <div class="tiles" id="tiles"></div>
-    <button class="btn side-btn" onclick="undoLast()">Undo</button>
+    <button class="btn" onclick="undoLast()">Undo</button>
   </div>
 
   <div class="keyboard" id="keyboard"></div>
