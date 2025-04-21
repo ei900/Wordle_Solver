@@ -1,22 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 10 19:12:51 2025
-
-@author: ei900
-"""
-
 from flask import Flask, render_template, request, jsonify
-import os
 
 app = Flask(__name__)
 
 # Load the word list
+
 def load_words(filename):
     with open(filename, 'r') as file:
-        return [line.strip() for line in file if len(line.strip()) == 5]
-
-WORD_LIST = load_words("wordle_answers.txt")
+        return [line.strip() for line in file if line.strip()]
 
 @app.route('/')
 def index():
@@ -25,38 +15,47 @@ def index():
 @app.route('/filter', methods=['POST'])
 def filter_words():
     data = request.json
-    greens = data.get('greens', {})       # {"0": "a", "2": "r"}
-    yellows = data.get('yellows', [])     # ["s", "t"]
-    reds = data.get('reds', [])           # ["q", "z", ...]
+    greens = data.get('greens', {})
+    yellows = data.get('yellows', [])
+    reds = data.get('reds', [])
+    mode = data.get('mode', 'wordle')
+    length = int(data.get('length', 5))
+
+    if mode == 'lewdle':
+        word_list = load_words('lewdle_answers.txt')
+    else:
+        word_list = load_words('wordle_answers.txt')
+
+    word_list = [w for w in word_list if len(w) == length]
 
     possible = []
-    for word in WORD_LIST:
+    for word in word_list:
         match = True
 
-        # Greens (correct letters in correct position)
+        # Greens
         for pos, char in greens.items():
-            if word[int(pos)] != char:
+            if int(pos) >= len(word) or word[int(pos)] != char:
                 match = False
                 break
         if not match:
             continue
 
-        # Yellows (correct letters in wrong positions)
+        # Yellows
         if not all(y in word for y in yellows):
             continue
         if any(word[int(pos)] == y for pos, y in greens.items() if y in yellows):
             continue
 
-        # Reds (incorrect letters)
+        # Reds
         for r in reds:
             if r in word and r not in greens.values() and r not in yellows:
                 match = False
                 break
+
         if match:
             possible.append(word)
 
     return jsonify({"matches": possible})
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
