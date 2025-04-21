@@ -12,7 +12,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     body.wordle-mode {
@@ -21,6 +21,7 @@
       background-size: contain;
       background-repeat: repeat;
       background-attachment: fixed;
+      color: black;
     }
 
     @media (min-width: 768px) {
@@ -42,52 +43,55 @@
     }
 
     .toggle-switch {
-      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
     .toggle-switch label {
-      display: flex;
-      align-items: center;
-      background: #ddd;
-      border-radius: 25px;
-      cursor: pointer;
-      padding: 2px;
-      width: 110px;
-      justify-content: space-between;
-    }
-
-    .toggle-switch input[type="checkbox"] {
-      display: none;
-    }
-
-    .toggle-switch .slider {
-      height: 24px;
-      width: 50px;
-      background-color: #555;
-      border-radius: 20px;
       position: relative;
-      transition: background-color 0.2s;
+      display: inline-block;
+      width: 60px;
+      height: 28px;
     }
 
-    .toggle-switch .slider::before {
-      content: "";
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
       position: absolute;
-      height: 18px;
-      width: 18px;
-      background: white;
-      border-radius: 50%;
-      top: 3px;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
       left: 4px;
-      transition: transform 0.3s;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
     }
 
-    .toggle-switch input:checked + .slider::before {
-      transform: translateX(24px);
+    input:checked + .slider {
+      background-color: #2196F3;
     }
 
-    .slider-labels {
-      font-size: 12px;
-      margin: 0 6px;
+    input:checked + .slider:before {
+      transform: translateX(32px);
     }
 
     #lewdle-length-container {
@@ -146,6 +150,11 @@
       cursor: pointer;
     }
 
+    body.lewdle-mode .key {
+      background-color: #333;
+      color: white;
+    }
+
     .key.green { background-color: green; color: white; }
     .key.yellow { background-color: yellow; color: black; }
     .key.red { background-color: red; color: white; }
@@ -175,18 +184,19 @@
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
+      margin: 10px;
     }
   </style>
 </head>
 <body class="wordle-mode">
   <div class="top-controls">
     <div class="toggle-switch">
-      <span class="slider-labels">Wordle</span>
+      <span>Wordle</span>
       <label>
         <input type="checkbox" id="modeToggle" onchange="toggleMode()">
         <span class="slider"></span>
       </label>
-      <span class="slider-labels">Lewdle</span>
+      <span>Lewdle</span>
     </div>
 
     <div id="lewdle-length-container">
@@ -198,13 +208,11 @@
     </div>
   </div>
 
-  <div class="controls">
-    <button class="btn" onclick="resetAll()">Reset</button>
+  <button class="btn" onclick="resetAll()">Reset</button>
 
-    <div class="tiles" id="tiles"></div>
+  <div class="tiles" id="tiles"></div>
 
-    <button class="btn" onclick="undoLast()">Undo</button>
-  </div>
+  <button class="btn" onclick="undoLast()">Undo</button>
 
   <div class="keyboard" id="keyboard"></div>
 
@@ -347,11 +355,11 @@
 
       document.querySelectorAll('.tile').forEach(tile => {
         tile.textContent = '_';
-        tile.classList.remove('selected');
+        tile.classList.remove("selected");
       });
 
       Object.values(keyButtons).forEach(btn => {
-        btn.className = 'key';
+        btn.className = "key";
       });
 
       fetchMatches();
@@ -368,7 +376,7 @@
 
       if (last.type === 'toggle') {
         const btn = keyButtons[last.letter];
-        btn.className = 'key';
+        btn.className = "key";
 
         if (last.from === 'yellow') {
           redLetters.delete(last.letter.toLowerCase());
@@ -389,7 +397,6 @@
       fetchMatches();
     }
 
-    // Init on load
     generateTiles(tileCount);
     fetchMatches();
   </script>
