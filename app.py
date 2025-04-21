@@ -3,10 +3,10 @@ import os
 
 app = Flask(__name__)
 
-# Load the word list
+# Load the word list from file
 def load_words(filename):
     with open(filename, 'r') as file:
-        return [line.strip() for line in file if line.strip()]
+        return [line.strip().lower() for line in file if line.strip()]
 
 @app.route('/')
 def index():
@@ -15,49 +15,56 @@ def index():
 @app.route('/filter', methods=['POST'])
 def filter_words():
     data = request.json
-    greens = data.get('greens', {})
-    yellows = data.get('yellows', [])
-    reds = data.get('reds', [])
+    greens = data.get('greens', {})  # {"0": "a", "2": "r"}
+    yellows = set(data.get('yellows', []))  # ["s", "t"]
+    reds = set(data.get('reds', []))  # ["q", "z"]
     mode = data.get('mode', 'wordle')
     length = int(data.get('length', 5))
 
-    if mode == 'lewdle':
-        word_list = load_words('lewdle_answers.txt')
-    else:
-        word_list = load_words('wordle_answers.txt')
+    filename = 'wordle_answers.txt' if mode == 'wordle' else 'lewdle_answers.txt'
+    all_words = [word for word in load_words(filename) if len(word) == length]
 
-    word_list = [w for w in word_list if len(w) == length]
+    filtered = []
+    for word in all_words:
+        valid = True
 
-    possible = []
-    for word in word_list:
-        match = True
-
-        # Greens
+        # Check green letters (must match at exact positions)
         for pos, char in greens.items():
-            if int(pos) >= len(word) or word[int(pos)] != char:
-                match = False
+            idx = int(pos)
+            if idx >= len(word) or word[idx] != char:
+                valid = False
                 break
-        if not match:
+
+        if not valid:
             continue
 
-        # Yellows
-        if not all(y in word for y in yellows):
-            continue
-        if any(word[int(pos)] == y for pos, y in greens.items() if y in yellows):
+        # Check yellow letters (must be in word, but NOT at any green position)
+        for y in yellows:
+            if y not in word:
+                valid = False
+                break
+        if not valid:
             continue
 
-        # Reds
+        for pos, char in greens.items():
+            if char in yellows and word[int(pos)] == char:
+                valid = False
+                break
+
+        if not valid:
+            continue
+
+        # Check red letters (must not be in word, unless it's already green or yellow)
         for r in reds:
             if r in word and r not in greens.values() and r not in yellows:
-                match = False
+                valid = False
                 break
 
-        if match:
-            possible.append(word)
+        if valid:
+            filtered.append(word)
 
-    return jsonify({"matches": possible})
+    return jsonify({"matches": filtered})
 
-# ✅ Fix for Render: bind to 0.0.0.0 and use dynamic port
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
