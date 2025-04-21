@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, jsonify
+import os
 
 app = Flask(__name__)
 
 # Load the word list
-
 def load_words(filename):
     with open(filename, 'r') as file:
         return [line.strip() for line in file if line.strip()]
@@ -57,5 +57,7 @@ def filter_words():
 
     return jsonify({"matches": possible})
 
+# ✅ Fix for Render: bind to 0.0.0.0 and use dynamic port
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
